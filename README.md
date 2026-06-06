@@ -249,8 +249,8 @@ MAE            : 9.98
 | Model             | MAE   | R²   |
 | ----------------- | ----- | ---- |
 | Random Forest     | 9.98  | 0.48 |
-| Gradient Boosting | 15.53 | 0.11 |
-| Linear Regression | 16.58 | 0.03 |
+| Gradient Boosting | 13.64 | 0.28 |
+| Linear Regression | 16.33 | 0.04 |
 
 Random Forest provided the best performance and was selected as the final model.
 
