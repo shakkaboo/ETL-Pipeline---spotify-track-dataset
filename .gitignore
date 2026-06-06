@@ -32,3 +32,15 @@ logs/*.log
 
 # Jupyter notebooks (if any)
 *.ipynb_checkpoints/
+
+# ML Models
+models/*.pkl
+
+# Streamlit cache
+.streamlit/
+
+# Environment files
+.env.local
+
+# PostgreSQL exports
+*.sql

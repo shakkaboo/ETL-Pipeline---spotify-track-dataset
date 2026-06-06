@@ -4,6 +4,7 @@ import plotly.express as px
 from sqlalchemy import create_engine
 import sys
 from pathlib import Path
+import joblib
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 sys.path.append(str(ROOT_DIR))
@@ -377,31 +378,125 @@ with tab3:
         )
 
 with tab4:
-    st.header("🎵 Song Explorer")
+    st.header("🤖 Song Popularity Predictor")
 
-    song_search = st.text_input("Search by song name or artist", key="song_explorer_search")
-
-    explorer_df = kaggle_df.copy()
-
-    if song_search:
-        explorer_df = explorer_df[
-            explorer_df["track_name"].str.contains(song_search, case=False, na=False)
-            | explorer_df["artists"].str.contains(song_search, case=False, na=False)
-        ]
-
-    selected_genre_explorer = st.selectbox(
-        "Filter by genre",
-        ["All"] + sorted(kaggle_df["track_genre"].dropna().unique().tolist()),
-        key="song_explorer_genre"
+    st.write(
+        "Enter Spotify audio feature values and the model will predict the estimated popularity score."
     )
 
-    if selected_genre_explorer != "All":
-        explorer_df = explorer_df[explorer_df["track_genre"] == selected_genre_explorer]
+    model = joblib.load("models/popularity_model.pkl")
+    features = joblib.load("models/model_features.pkl")
 
-    st.write(f"Showing {len(explorer_df)} songs")
+    col1, col2 = st.columns(2)
 
-    st.dataframe(
-        explorer_df[
-            ["track_name", "artists", "track_genre", "popularity", "energy", "danceability", "mood_category"]
-        ].head(100)
+    with col1:
+        genre = st.selectbox(
+            "Genre",
+            sorted(kaggle_df["track_genre"].dropna().unique()),
+            key="predictor_genre",
+        )
+
+        explicit = st.selectbox(
+            "Explicit Content",
+            [False, True],
+            key="predictor_explicit",
+        )
+
+        danceability = st.slider("Danceability", 0.0, 1.0, 0.5)
+        energy = st.slider("Energy", 0.0, 1.0, 0.5)
+        tempo = st.slider("Tempo", 40.0, 250.0, 120.0)
+        valence = st.slider("Valence", 0.0, 1.0, 0.5)
+        loudness = st.slider("Loudness", -60.0, 5.0, -10.0)
+
+    with col2:
+        speechiness = st.slider("Speechiness", 0.0, 1.0, 0.1)
+        acousticness = st.slider("Acousticness", 0.0, 1.0, 0.5)
+        instrumentalness = st.slider("Instrumentalness", 0.0, 1.0, 0.0)
+        liveness = st.slider("Liveness", 0.0, 1.0, 0.2)
+        duration_min = st.slider("Duration in minutes", 1.0, 10.0, 3.5)
+
+        key_value = st.slider("Musical Key", 0, 11, 5)
+        mode_value = st.selectbox("Mode", [0, 1], key="predictor_mode")
+        time_signature = st.selectbox(
+            "Time Signature",
+            [3, 4, 5],
+            index=1,
+            key="predictor_time_signature",
+        )
+
+    input_dict = {}
+
+    for feature in features:
+        input_dict[feature] = 0
+
+    input_dict["duration_ms"] = duration_min * 60000
+    input_dict["duration_min"] = duration_min
+    input_dict["danceability"] = danceability
+    input_dict["energy"] = energy
+    input_dict["key"] = key_value
+    input_dict["loudness"] = loudness
+    input_dict["mode"] = mode_value
+    input_dict["speechiness"] = speechiness
+    input_dict["acousticness"] = acousticness
+    input_dict["instrumentalness"] = instrumentalness
+    input_dict["liveness"] = liveness
+    input_dict["valence"] = valence
+    input_dict["tempo"] = tempo
+    input_dict["time_signature"] = time_signature
+
+    input_dict["energy_danceability"] = energy * danceability
+    input_dict["energy_valence"] = energy * valence
+    input_dict["tempo_energy"] = tempo * energy
+
+    explicit_column = "explicit_True"
+
+    if explicit and explicit_column in input_dict:
+        input_dict[explicit_column] = 1
+
+    genre_column = f"track_genre_{genre}"
+
+    if genre_column in input_dict:
+        input_dict[genre_column] = 1
+
+    input_data = pd.DataFrame([input_dict])
+    input_data = input_data[features]
+
+    if st.button("Predict Popularity", key="predict_popularity_button"):
+        prediction = model.predict(input_data)[0]
+
+        st.success(f"Predicted Popularity Score: {prediction:.2f} / 100")
+
+        if prediction >= 70:
+            st.info("This song has high popularity potential.")
+        elif prediction >= 40:
+            st.info("This song has medium popularity potential.")
+        else:
+            st.info("This song has low popularity potential.")
+
+    st.subheader("Top 10 Important Features Used by the Model")
+
+    importance_df = pd.DataFrame(
+        {
+            "Feature": features,
+            "Importance": model.feature_importances_,
+        }
+    )
+
+    importance_df = importance_df.sort_values(
+        by="Importance",
+        ascending=False,
+    ).head(10)
+
+    fig = px.bar(
+        importance_df,
+        x="Importance",
+        y="Feature",
+        orientation="h",
+        title="Top 10 Feature Importance",
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        key="predictor_feature_importance_chart",
     )
