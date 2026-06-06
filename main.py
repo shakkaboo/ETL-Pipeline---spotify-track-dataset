@@ -2,6 +2,8 @@ import logging
 import schedule
 import time
 import sys
+from src.spotify_api import extract_tracks_from_api
+from src.load_api import load_api_data
 
 from src.pipeline import run_etl_pipeline
 
@@ -34,39 +36,37 @@ def schedule_daily(time_str: str) -> None:
         time.sleep(30)
 
 
-def main():
-    """Display menu and handle user choices."""
-    while True:
-        print("\n" + "=" * 50)
-        print("   SPOTIFY TRACKS ETL PIPELINE")
-        print("=" * 50)
-        print("1. Run ETL pipeline once")
-        print("2. Schedule ETL pipeline daily")
-        print("3. Exit")
-        print("=" * 50)
+def run_spotify_api_pipeline():
+    queries = ["pop", "rock", "hip hop", "classical", "edm", "tamil", "japanese"]
 
-        choice = input("\nEnter your choice (1/2/3): ").strip()
+    df = extract_tracks_from_api(
+        queries=queries,
+        limit=10,
+    )
+
+    load_api_data(df)
+
+    print("Spotify API ETL pipeline completed successfully.")
+
+
+def main():
+    while True:
+        print("\nSpotify ETL Pipeline")
+        print("1. Run Kaggle CSV ETL pipeline")
+        print("2. Run Spotify API ETL pipeline")
+        print("3. Exit")
+
+        choice = input("Enter your choice: ")
 
         if choice == "1":
-            print("\nRunning ETL pipeline...")
             run_etl_pipeline()
-            print("\nETL pipeline finished! Check logs/pipeline.log for details.")
-
         elif choice == "2":
-            time_input = input(
-                "Enter time to run daily (HH:MM, 24-hour format): "
-            ).strip()
-            try:
-                schedule_daily(time_input)
-            except (ValueError, IndexError):
-                print("Invalid time format. Please use HH:MM (e.g., 08:00, 14:30).")
-
+            run_spotify_api_pipeline()
         elif choice == "3":
-            print("Exiting. Goodbye!")
-            sys.exit(0)
-
+            print("Exiting...")
+            break
         else:
-            print("Invalid choice. Please enter 1, 2, or 3.")
+            print("Invalid choice. Please try again.")
 
 
 if __name__ == "__main__":
