@@ -99,8 +99,8 @@ if search_text:
         | filtered_df["artists"].str.contains(search_text, case=False, na=False)
     ]
 
-tab1, tab2, tab3 = st.tabs(
-    ["API Data Overview", "Kaggle Audio Features", "ML-ready Data"]
+tab1, tab2, tab3, tab4 = st.tabs(
+    ["API Data Overview", "Kaggle Audio Features", "ML-ready Data", "Song Explorer"]
 )
 
 with tab1:
@@ -375,3 +375,33 @@ with tab3:
         use_container_width=True,
         key="correlation_heatmap"
         )
+
+with tab4:
+    st.header("🎵 Song Explorer")
+
+    song_search = st.text_input("Search by song name or artist", key="song_explorer_search")
+
+    explorer_df = kaggle_df.copy()
+
+    if song_search:
+        explorer_df = explorer_df[
+            explorer_df["track_name"].str.contains(song_search, case=False, na=False)
+            | explorer_df["artists"].str.contains(song_search, case=False, na=False)
+        ]
+
+    selected_genre_explorer = st.selectbox(
+        "Filter by genre",
+        ["All"] + sorted(kaggle_df["track_genre"].dropna().unique().tolist()),
+        key="song_explorer_genre"
+    )
+
+    if selected_genre_explorer != "All":
+        explorer_df = explorer_df[explorer_df["track_genre"] == selected_genre_explorer]
+
+    st.write(f"Showing {len(explorer_df)} songs")
+
+    st.dataframe(
+        explorer_df[
+            ["track_name", "artists", "track_genre", "popularity", "energy", "danceability", "mood_category"]
+        ].head(100)
+    )
