@@ -1,254 +1,419 @@
-# Spotify Tracks ETL Pipeline
+# Spotify Analytics Platform: ETL, Dashboard & Popularity Prediction
 
-A complete ETL (Extract, Transform, Load) pipeline that processes Spotify track data from CSV, cleans and transforms it, stores it in PostgreSQL, and provides SQL queries for analysis.
+## Project Overview
+
+An end-to-end Spotify Data Engineering and Machine Learning project that ingests Spotify music data from both a Kaggle dataset and the Spotify Web API, performs ETL processing, stores transformed data in PostgreSQL, visualizes insights through Streamlit dashboards, and predicts song popularity using Machine Learning.
+
+This project demonstrates:
+
+* Data Engineering (ETL)
+* Database Management (PostgreSQL)
+* Feature Engineering
+* Machine Learning
+* Data Visualization
+* Interactive Dashboard Development
+
+---
+
+## Architecture
+
+```text
+Spotify API              Kaggle Dataset
+      │                        │
+      └──────────┬─────────────┘
+                 │
+                 ▼
+           ETL Pipeline
+                 │
+                 ▼
+            PostgreSQL
+                 │
+       ┌─────────┴─────────┐
+       │                   │
+       ▼                   ▼
+ Streamlit Dashboard   ML Training
+       │                   │
+       ▼                   ▼
+ Analytics         Popularity Prediction
+```
+
+---
 
 ## Dataset
 
-This project uses the **Spotify Tracks Dataset** from Kaggle:
+Spotify Tracks Dataset from Kaggle:
 
 https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset
 
-The dataset contains ~114,000 tracks with audio features like danceability, energy, tempo, valence, and more.
+Dataset Size:
 
-### Columns in the dataset
+* ~114,000 tracks
+* Multiple genres
+* Audio features
+* Popularity metrics
 
-track_id, artists, album_name, track_name, popularity, duration_ms, explicit, danceability, energy, key, loudness, mode, speechiness, acousticness, instrumentalness, liveness, valence, tempo, time_signature, track_genre
+Features include:
 
-## Tech Stack
+* Danceability
+* Energy
+* Tempo
+* Valence
+* Acousticness
+* Speechiness
+* Instrumentalness
+* Loudness
+* Popularity
+* Genre
+* Explicit content
 
-- **Python 3.10+**
-- **Pandas** - Data manipulation and CSV reading
-- **NumPy** - Numerical operations
-- **PostgreSQL** - Data warehouse / storage
-- **SQLAlchemy** - Database connection and ORM
-- **psycopg2-binary** - PostgreSQL driver for Python
-- **python-dotenv** - Environment variable management
-- **schedule** - Pipeline scheduling
-- **logging** - Built-in logging module
+---
+
+## Features
+
+### ETL Pipeline
+
+* Extract Spotify track data
+* Clean and validate records
+* Remove duplicates
+* Handle missing values
+* Feature engineering
+* Store processed data in PostgreSQL
+
+### Spotify API Integration
+
+Fetch live Spotify track data using:
+
+* Client Credentials Flow
+* Spotify Search API
+* Multiple search categories
+* Automatic PostgreSQL loading
+
+### PostgreSQL Data Warehouse
+
+Stores:
+
+* Cleaned Kaggle dataset
+* Spotify API dataset
+* Engineered features
+* ML-ready data
+
+### Interactive Streamlit Dashboard
+
+Dashboard includes:
+
+* KPI Cards
+* Genre Analytics
+* Artist Analytics
+* Popularity Distribution
+* Audio Feature Analysis
+* Correlation Analysis
+* Search and Filtering
+* Top Songs Analysis
+
+### Machine Learning
+
+Predict song popularity using:
+
+* Random Forest Regressor
+* Feature Engineering
+* Genre Encoding
+* Model Evaluation
+
+---
+
+## Technology Stack
+
+### Backend
+
+* Python
+* Pandas
+* NumPy
+
+### Database
+
+* PostgreSQL
+* SQLAlchemy
+* psycopg2
+
+### Machine Learning
+
+* Scikit-Learn
+* Random Forest Regressor
+
+### Dashboard
+
+* Streamlit
+* Plotly
+
+### Data Sources
+
+* Spotify Web API
+* Kaggle Dataset
+
+### Utilities
+
+* dotenv
+* logging
+* schedule
+
+---
 
 ## Folder Structure
 
-```
+```text
 spotify-etl-pipeline/
 │
-├── data/
-│   ├── raw/
-│   │   └── spotify_tracks.csv        # Raw input file (download from Kaggle)
-│   └── processed/
-│       └── spotify_tracks_cleaned.csv # Cleaned output after transformation
+├── dashboard/
+│   └── app.py
 │
 ├── src/
-│   ├── extract.py                     # Extracts data from CSV
-│   ├── transform.py                   # Cleans and transforms data
-│   ├── load.py                        # Loads data into PostgreSQL
-│   ├── pipeline.py                    # Orchestrates ETL steps
-│   └── db_config.py                   # Database connection config
+│   ├── extract.py
+│   ├── transform.py
+│   ├── load.py
+│   ├── load_api.py
+│   ├── spotify_api.py
+│   ├── train_model.py
+│   ├── model_comparison.py
+│   ├── pipeline.py
+│   └── db_config.py
+│
+├── models/
+│
+├── assets/
 │
 ├── sql/
-│   ├── create_tables.sql              # SQL to create the table
-│   └── analysis_queries.sql           # Analysis queries for insights
 │
-├── logs/
-│   └── pipeline.log                   # Pipeline execution logs
+├── data/
 │
-├── .env.example                       # Environment variable template
-├── requirements.txt                   # Python dependencies
-├── README.md                          # This file
-└── main.py                            # Entry point with CLI menu
+├── requirements.txt
+├── README.md
+├── .env.example
+└── main.py
 ```
 
-## Setup Instructions
+---
 
-### 1. Clone / Download the Project
+## Machine Learning Pipeline
+
+### Target Variable
+
+```text
+popularity
+```
+
+### Features Used
+
+Original Features:
+
+* danceability
+* energy
+* tempo
+* valence
+* loudness
+* speechiness
+* acousticness
+* instrumentalness
+* liveness
+* duration
+
+Additional Features:
+
+* genre
+* explicit
+* key
+* mode
+* time_signature
+
+Engineered Features:
+
+* energy_danceability
+* energy_valence
+* tempo_energy
+
+---
+
+## Model Performance
+
+### Random Forest Regressor
+
+Performance:
+
+```text
+Train R² Score : 0.91
+Test R² Score  : 0.48
+MAE            : 9.98
+```
+
+### Model Comparison
+
+| Model             | MAE   | R²   |
+| ----------------- | ----- | ---- |
+| Random Forest     | 9.98  | 0.48 |
+| Gradient Boosting | 15.53 | 0.11 |
+| Linear Regression | 16.58 | 0.03 |
+
+Random Forest provided the best performance and was selected as the final model.
+
+---
+
+## Feature Importance
+
+Most influential features identified by the model:
+
+1. Acousticness
+2. Loudness
+3. Speechiness
+4. Liveness
+5. Danceability
+6. Tempo
+7. Valence
+8. Energy-Danceability Interaction
+9. Instrumentalness
+10. Energy
+
+---
+
+## Installation
+
+### Clone Repository
 
 ```bash
+git clone <repository-url>
 cd spotify-etl-pipeline
 ```
 
-### 2. Create a Virtual Environment (Recommended)
+### Create Virtual Environment
 
 ```bash
 python -m venv venv
-source venv/bin/activate    # Linux / macOS
-# OR
-venv\Scripts\activate       # Windows
+source venv/bin/activate
 ```
 
-### 3. Install Dependencies
+### Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Download the Dataset from Kaggle
+---
 
-1. Go to: https://www.kaggle.com/datasets/maharshipandya/-spotify-tracks-dataset
-2. Click the **Download** button
-3. Extract the ZIP file
-4. Find `dataset.csv` (or `spotify_tracks.csv`)
-5. Copy it to: `data/raw/spotify_tracks.csv`
+## Environment Variables
 
-### 5. Create PostgreSQL Database
-
-Open your PostgreSQL terminal (psql) or use a GUI like pgAdmin:
-
-```sql
-CREATE DATABASE spotify_db;
-```
-
-### 6. Create the .env File
-
-Copy the example file and fill in your credentials:
+Create:
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your PostgreSQL credentials:
+Example:
 
-```
+```env
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=spotify_db
 DB_USER=postgres
-DB_PASSWORD=your_actual_password
+DB_PASSWORD=your_password
+
+SPOTIFY_CLIENT_ID=your_client_id
+SPOTIFY_CLIENT_SECRET=your_client_secret
 ```
 
-### 7. (Optional) Create the Table Manually
+---
 
-```bash
-psql -U postgres -d spotify_db -f sql/create_tables.sql
-```
+## Running the Project
 
-The pipeline will create the table automatically when it runs, so this step is optional.
-
-## How to Run the Pipeline
-
-### Run Once
+### Run ETL Pipeline
 
 ```bash
 python main.py
 ```
 
-Then select option **1** from the menu.
-
-### Schedule Daily
+### Train Model
 
 ```bash
-python main.py
+python -m src.train_model
 ```
 
-Select option **2** and enter a time in HH:MM format (e.g., `08:00`).
-
-The pipeline will run daily at that time using the `schedule` library.
-
-### Run SQL Analysis Queries
-
-After loading data into PostgreSQL, connect to your database and run:
+### Compare Models
 
 ```bash
-psql -U postgres -d spotify_db -f sql/analysis_queries.sql
+python -m src.model_comparison
 ```
 
-Or open the SQL file in pgAdmin and run individual queries.
+### Launch Dashboard
 
-## What Each File Does
-
-### extract.py
-
-Reads the raw CSV file (`data/raw/spotify_tracks.csv`) using `pandas.read_csv()`. It logs the number of rows and columns loaded. If the file is missing, it raises a clear error.
-
-### transform.py
-
-The heart of the pipeline. It performs:
-
-- **Lowercase columns** - all column names are converted to lowercase for consistency
-- **Remove duplicates** - drops fully duplicate rows and duplicate track_id values
-- **Strip whitespace** - removes leading/trailing spaces from text fields (artists, album_name, track_name, track_genre)
-- **Handle missing values** - drops rows with any null values
-- **Validate numerical ranges** - ensures data integrity:
-  - popularity: 0 to 100
-  - danceability, energy, speechiness, acousticness, instrumentalness, liveness, valence: 0 to 1
-  - duration_ms > 0
-  - tempo > 0
-  - loudness must be numeric
-- **Convert explicit to boolean** - converts the explicit column to True/False
-
-**Feature Engineering:**
-- `duration_min` = duration_ms / 60000 (convert milliseconds to minutes)
-- `popularity_category`: Low (0-30), Medium (31-70), High (71-100)
-- `energy_level`: Low (0-0.4), Medium (0.4-0.7), High (0.7-1.0)
-- `danceability_level`: Low (0-0.4), Medium (0.4-0.7), High (0.7-1.0)
-- `mood_category`:
-  - Happy/Energetic: high valence + high energy
-  - Calm: medium valence + low energy
-  - Sad/Low Energy: low valence + low energy
-  - Intense: low valence + high energy
-  - Neutral: everything else
-
-The cleaned data is saved to `data/processed/spotify_tracks_cleaned.csv`.
-
-### load.py
-
-Connects to PostgreSQL using SQLAlchemy and loads the cleaned DataFrame into a table called `spotify_tracks_cleaned`. Uses `if_exists="replace"` so it overwrites the table each time the pipeline runs. Logs the number of rows inserted.
-
-### db_config.py
-
-Reads database credentials from the `.env` file using `python-dotenv` and builds a PostgreSQL connection URL for SQLAlchemy.
-
-### pipeline.py
-
-Orchestrates the full ETL process by calling extract → transform → load in sequence. Each step is wrapped in try/except blocks with clear logging.
-
-### main.py
-
-The entry point. Provides a simple menu:
-1. Run ETL once
-2. Schedule daily runs (using the `schedule` library)
-3. Exit
-
-## How Data Flows
-
-```
-CSV File (data/raw/spotify_tracks.csv)
-    │
-    ▼
-extract.py  ──► pandas DataFrame (raw data)
-    │
-    ▼
-transform.py ──► Cleaned DataFrame
-    │                  │
-    │                  ▼
-    │         CSV saved to
-    │    data/processed/spotify_tracks_cleaned.csv
-    │
-    ▼
-load.py ──► PostgreSQL table: spotify_tracks_cleaned
-    │
-    ▼
-Analysis ──► SQL queries in sql/analysis_queries.sql
+```bash
+streamlit run dashboard/app.py
 ```
 
-## How PostgreSQL Connection Works
+---
 
-1. `db_config.py` reads `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD` from `.env`
-2. It builds a connection URL: `postgresql://user:password@host:port/dbname`
-3. `load.py` uses SQLAlchemy's `create_engine(db_url)` to connect
-4. `df.to_sql()` writes the entire DataFrame to the PostgreSQL table
-5. A count query verifies the insertion was successful
+## Dashboard Modules
 
-## How Scheduling Works
+### API Analytics
 
-The `schedule` library checks the current time every 30 seconds. When the configured time matches, it runs the `run_etl_pipeline()` function. The pipeline continues running in the background until you press Ctrl+C.
+Analyze live Spotify API data.
 
-## Future Improvements
+### Audio Feature Analytics
 
-- **Apache Airflow** - Replace the simple scheduler with Airflow DAGs for production-grade orchestration with retries, monitoring, and dependency management
-- **Docker** - Containerize the entire pipeline with Docker and Docker Compose for easy deployment
-- **Spotify API Ingestion** - Replace CSV reading with live data from the Spotify Web API for real-time updates
-- **Power BI Dashboard** - Connect PostgreSQL to Power BI for interactive visualizations and dashboards
-- **ML Popularity Prediction Model** - Use the numerical features to build a machine learning model that predicts track popularity
+Explore:
 
-## License
+* Danceability
+* Energy
+* Tempo
+* Popularity
+* Genre Trends
 
-This project is for educational purposes. The dataset is from Kaggle and subject to its license terms.
+### Artist Analytics
+
+View:
+
+* Top Artists
+* Average Popularity
+* Track Distribution
+
+### Popularity Predictor
+
+Input song characteristics and estimate expected popularity score.
+
+---
+
+## Learning Outcomes
+
+This project demonstrates:
+
+* ETL Design
+* Data Warehousing
+* PostgreSQL Integration
+* API Consumption
+* Feature Engineering
+* Supervised Machine Learning
+* Model Evaluation
+* Dashboard Development
+* End-to-End Data Science Workflow
+
+---
+
+## Future Enhancements
+
+* XGBoost Model
+* Recommendation System
+* Streamlit Cloud Deployment
+* Airflow Orchestration
+* Docker Containerization
+* Real-Time Data Pipeline
+* User Authentication
+* Prediction History Tracking
+
+---
+
+## Author
+
+Sujan A K
+
+B.Tech Artificial Intelligence & Data Science
+
+KCG College of Technology
+
+```
+```
