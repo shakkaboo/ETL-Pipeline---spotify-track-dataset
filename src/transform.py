@@ -65,8 +65,13 @@ def validate_numerical_ranges(df: pd.DataFrame) -> pd.DataFrame:
 
     df = df[(df["popularity"] >= 0) & (df["popularity"] <= 100)]
     range_0_1_cols = [
-        "danceability", "energy", "speechiness",
-        "acousticness", "instrumentalness", "liveness", "valence"
+        "danceability",
+        "energy",
+        "speechiness",
+        "acousticness",
+        "instrumentalness",
+        "liveness",
+        "valence",
     ]
     for col in range_0_1_cols:
         df = df[(df[col] >= 0) & (df[col] <= 1)]
@@ -97,6 +102,7 @@ def create_duration_min(df: pd.DataFrame) -> pd.DataFrame:
 
 def create_popularity_category(df: pd.DataFrame) -> pd.DataFrame:
     """Categorize popularity into Low, Medium, High."""
+
     def categorize(pop):
         if pop <= 30:
             return "Low"
@@ -112,6 +118,7 @@ def create_popularity_category(df: pd.DataFrame) -> pd.DataFrame:
 
 def create_energy_level(df: pd.DataFrame) -> pd.DataFrame:
     """Categorize energy into Low, Medium, High."""
+
     def categorize(val):
         if val <= 0.4:
             return "Low"
@@ -127,6 +134,7 @@ def create_energy_level(df: pd.DataFrame) -> pd.DataFrame:
 
 def create_danceability_level(df: pd.DataFrame) -> pd.DataFrame:
     """Categorize danceability into Low, Medium, High."""
+
     def categorize(val):
         if val <= 0.4:
             return "Low"
@@ -151,6 +159,7 @@ def create_mood_category(df: pd.DataFrame) -> pd.DataFrame:
     - Intense: valence < 0.5 and energy >= 0.7
     - Neutral: everything else
     """
+
     def categorize(row):
         valence = row["valence"]
         energy = row["energy"]

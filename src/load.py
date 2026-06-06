@@ -23,12 +23,7 @@ def load_data(df: pd.DataFrame, table_name: str = "spotify_tracks_cleaned") -> N
         engine = create_engine(db_url)
         logger.info(f"Connected to PostgreSQL database")
 
-        df.to_sql(
-            name=table_name,
-            con=engine,
-            if_exists="replace",
-            index=False
-        )
+        df.to_sql(name=table_name, con=engine, if_exists="replace", index=False)
 
         with engine.connect() as conn:
             result = conn.execute(text(f"SELECT COUNT(*) FROM {table_name}"))

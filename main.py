@@ -11,8 +11,8 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.FileHandler("logs/pipeline.log"),
-        logging.StreamHandler(sys.stdout)
-    ]
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,9 @@ def main():
             print("\nETL pipeline finished! Check logs/pipeline.log for details.")
 
         elif choice == "2":
-            time_input = input("Enter time to run daily (HH:MM, 24-hour format): ").strip()
+            time_input = input(
+                "Enter time to run daily (HH:MM, 24-hour format): "
+            ).strip()
             try:
                 schedule_daily(time_input)
             except (ValueError, IndexError):
