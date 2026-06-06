@@ -30,6 +30,53 @@ st.write("Dashboard built from PostgreSQL data loaded by the Spotify ETL pipelin
 
 api_df = load_table("spotify_tracks_api")
 kaggle_df = load_table("spotify_tracks_cleaned")
+#Adding sidebar after loading data
+st.sidebar.title("🎛️ Dashboard Filters")
+
+# Genre filter
+genres = ["All"] + sorted(kaggle_df["track_genre"].dropna().unique().tolist())
+selected_genre = st.sidebar.selectbox("Select Genre", genres)
+
+# Mood filter
+if "mood_category" in kaggle_df.columns:
+    moods = ["All"] + sorted(kaggle_df["mood_category"].dropna().unique().tolist())
+    selected_mood = st.sidebar.selectbox("Select Mood", moods)
+else:
+    selected_mood = "All"
+
+# Popularity category filter
+if "popularity_category" in kaggle_df.columns:
+    popularity_categories = ["All"] + sorted(
+        kaggle_df["popularity_category"].dropna().unique().tolist()
+    )
+    selected_popularity = st.sidebar.selectbox(
+        "Select Popularity Category", popularity_categories
+    )
+else:
+    selected_popularity = "All"
+
+# Song search
+search_text = st.sidebar.text_input("Search song or artist")
+
+#Creating filtered dataframe
+filtered_df = kaggle_df.copy()
+
+if selected_genre != "All":
+    filtered_df = filtered_df[filtered_df["track_genre"] == selected_genre]
+
+if selected_mood != "All":
+    filtered_df = filtered_df[filtered_df["mood_category"] == selected_mood]
+
+if selected_popularity != "All":
+    filtered_df = filtered_df[
+        filtered_df["popularity_category"] == selected_popularity
+    ]
+
+if search_text:
+    filtered_df = filtered_df[
+        filtered_df["track_name"].str.contains(search_text, case=False, na=False)
+        | filtered_df["artists"].str.contains(search_text, case=False, na=False)
+    ]
 
 tab1, tab2, tab3 = st.tabs(
     ["API Data Overview", "Kaggle Audio Features", "ML-ready Data"]
@@ -77,16 +124,16 @@ with tab2:
 
     col1, col2, col3, col4 = st.columns(4)
 
-    col1.metric("Total Kaggle Tracks", len(kaggle_df))
-    col2.metric("Total Genres", kaggle_df["track_genre"].nunique())
-    col3.metric("Avg Energy", round(kaggle_df["energy"].mean(), 2))
-    col4.metric("Avg Danceability", round(kaggle_df["danceability"].mean(), 2))
+    col1.metric("Filtered Tracks", len(filtered_df))
+    col2.metric("Genres", filtered_df["track_genre"].nunique())
+    col3.metric("Avg Energy", round(filtered_df["energy"].mean(), 2))
+    col4.metric("Avg Danceability", round(filtered_df["danceability"].mean(), 2))
 
     st.subheader("Cleaned Kaggle Dataset")
-    st.dataframe(kaggle_df.head(20))
+    st.dataframe(filtered_df.head(50))
 
     genre_energy = (
-        kaggle_df.groupby("track_genre")["energy"]
+        filtered_df.groupby("track_genre")["energy"]
         .mean()
         .sort_values(ascending=False)
         .head(10)
@@ -102,7 +149,7 @@ with tab2:
     st.plotly_chart(fig, use_container_width=True)
 
     if "mood_category" in kaggle_df.columns:
-        mood_count = kaggle_df["mood_category"].value_counts().reset_index()
+        mood_count = filtered_df["mood_category"].value_counts().reset_index()
         mood_count.columns = ["Mood Category", "Count"]
 
         fig = px.pie(
@@ -112,6 +159,39 @@ with tab2:
             title="Mood Category Distribution"
         )
         st.plotly_chart(fig, use_container_width=True)
+
+        st.subheader("Energy vs Danceability")
+
+    fig = px.scatter(
+    filtered_df.head(5000),
+    x="energy",
+    y="danceability",
+    color="popularity_category" if "popularity_category" in filtered_df.columns else None,
+    hover_data=["track_name", "artists", "track_genre"],
+    title="Energy vs Danceability"
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+    #recommendation section
+    st.subheader("🎧 Song Recommendation")
+
+    recommend_mood = st.selectbox(
+        "Choose mood for recommendation",
+        filtered_df["mood_category"].dropna().unique()
+        if "mood_category" in filtered_df.columns
+        else []
+    )
+
+    if st.button("Recommend Songs"):
+        recommendations = filtered_df[
+            filtered_df["mood_category"] == recommend_mood
+        ].sort_values(by="popularity", ascending=False).head(10)
+
+        st.dataframe(
+            recommendations[
+                ["track_name", "artists", "track_genre", "popularity", "energy", "danceability"]
+            ]
+        )
 
 
 with tab3:
