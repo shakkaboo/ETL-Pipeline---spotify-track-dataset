@@ -26,6 +26,27 @@ def load_table(table_name):
 
 
 st.title("🎵 Spotify ETL Dashboard")
+st.sidebar.image("assets/spotify.webp", width=200)
+
+st.sidebar.markdown(
+    """
+    # 🎵 Spotify Analytics Dashboard
+    Analyze Spotify tracks using ETL, PostgreSQL, and Streamlit.
+    """
+)
+
+st.sidebar.info(
+    """
+    **Tech Stack**
+    
+    • Spotify API  
+    • PostgreSQL  
+    • Streamlit  
+    • Pandas  
+    • Plotly
+    """
+)
+
 st.write("Dashboard built from PostgreSQL data loaded by the Spotify ETL pipeline.")
 
 api_df = load_table("spotify_tracks_api")
@@ -94,6 +115,56 @@ with tab1:
     st.subheader("Tracks from Spotify API")
     st.dataframe(api_df.head(20))
 
+    st.subheader("Top 10 Artists by Track Count")
+
+    top_artists = (
+        api_df["artists"]
+        .value_counts()
+        .head(10)
+        .reset_index()
+    )
+
+    top_artists.columns = ["Artist", "Track Count"]
+
+    fig = px.bar(
+        top_artists,
+        x="Artist",
+        y="Track Count",
+        title="Top 10 Artists from Spotify API Data"
+    )
+
+    st.plotly_chart(
+        fig,
+        use_container_width=True,
+        key="top_artists_api_chart"
+    )
+
+    if "popularity" in api_df.columns and api_df["popularity"].notna().sum() > 0:
+        st.subheader("Average Popularity by Artist")
+
+        artist_popularity = (
+            api_df.groupby("artists")["popularity"]
+            .mean()
+            .sort_values(ascending=False)
+            .head(10)
+            .reset_index()
+        )
+
+        artist_popularity.columns = ["Artist", "Average Popularity"]
+
+        fig = px.bar(
+            artist_popularity,
+            x="Artist",
+            y="Average Popularity",
+            title="Top 10 Artists by Average Popularity"
+        )
+
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            key="artist_popularity_api_chart"
+        )
+
     if "search_query" in api_df.columns:
         query_count = api_df["search_query"].value_counts().reset_index()
         query_count.columns = ["Search Query", "Track Count"]
@@ -104,7 +175,11 @@ with tab1:
             y="Track Count",
             title="Tracks Collected by Search Query"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            key="api_query_chart"
+        )
 
     if "explicit" in api_df.columns:
         explicit_count = api_df["explicit"].value_counts().reset_index()
@@ -116,21 +191,80 @@ with tab1:
             values="Count",
             title="Explicit vs Non-explicit Tracks"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(
+            fig,
+            use_container_width=True,
+            key="api_explicit_chart"
+        )
 
 
 with tab2:
     st.header("Kaggle Spotify Audio Features")
 
-    col1, col2, col3, col4 = st.columns(4)
+    col1, col2, col3, col4, col5 = st.columns(5)
 
-    col1.metric("Filtered Tracks", len(filtered_df))
+    col1.metric("Tracks", len(filtered_df))
     col2.metric("Genres", filtered_df["track_genre"].nunique())
-    col3.metric("Avg Energy", round(filtered_df["energy"].mean(), 2))
-    col4.metric("Avg Danceability", round(filtered_df["danceability"].mean(), 2))
+    col3.metric("Avg Popularity", round(filtered_df["popularity"].mean(), 2))
+    col4.metric("Avg Energy", round(filtered_df["energy"].mean(), 2))
+    col5.metric("Avg Danceability", round(filtered_df["danceability"].mean(), 2))
 
     st.subheader("Cleaned Kaggle Dataset")
     st.dataframe(filtered_df.head(50))
+    
+    #popularity distribution chart
+    st.subheader("Popularity Distribution")
+
+    fig = px.histogram(
+        filtered_df,
+        x="popularity",
+        nbins=30,
+        title="Distribution of Song Popularity"
+    )
+    st.plotly_chart(
+        fig, 
+        use_container_width=True,
+        key="popularity_histogram"
+        )
+
+    #top 10 genres by track count
+    st.subheader("Top 10 Genres by Track Count")
+
+    top_genres = (
+        filtered_df["track_genre"]
+        .value_counts()
+        .head(10)
+        .reset_index()
+        )
+
+    top_genres.columns = ["Genre", "Track Count"]
+
+    fig = px.bar(
+        top_genres,
+        x="Genre",
+        y="Track Count",
+         title="Top 10 Genres by Number of Tracks"
+    )
+    st.plotly_chart(
+        fig, 
+        use_container_width=True,
+        key="genre_count_chart"
+        )
+
+    #top 10 popular songs
+    st.subheader("Top 10 Popular Songs")
+
+    top_songs = filtered_df.sort_values(
+        by="popularity",
+        ascending=False
+    ).head(10)
+
+    st.dataframe(
+        top_songs[
+            ["track_name", "artists", "track_genre", "popularity", "energy", "danceability"]
+        ]
+    )
+
 
     genre_energy = (
         filtered_df.groupby("track_genre")["energy"]
@@ -146,7 +280,11 @@ with tab2:
         y="energy",
         title="Top 10 Genres by Average Energy"
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig, 
+        use_container_width=True,
+        key="genre_energy_chart"
+        )
 
     if "mood_category" in kaggle_df.columns:
         mood_count = filtered_df["mood_category"].value_counts().reset_index()
@@ -158,7 +296,11 @@ with tab2:
             values="Count",
             title="Mood Category Distribution"
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(
+            fig, 
+            use_container_width=True,
+            key="mood_distribution_chart"
+            )
 
         st.subheader("Energy vs Danceability")
 
@@ -170,7 +312,11 @@ with tab2:
     hover_data=["track_name", "artists", "track_genre"],
     title="Energy vs Danceability"
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig, 
+        use_container_width=True,
+        key="energy_danceability_chart"
+        )
 
     #recommendation section
     st.subheader("🎧 Song Recommendation")
@@ -224,4 +370,8 @@ with tab3:
         text_auto=True,
         title="Feature Correlation Heatmap"
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(
+        fig, 
+        use_container_width=True,
+        key="correlation_heatmap"
+        )
